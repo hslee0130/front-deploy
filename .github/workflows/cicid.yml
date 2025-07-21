@@ -1,10 +1,9 @@
 name: Dev CI/CD for React App
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: 
-      - 'develop'
+      - 'main'
 
 # 환경 변수 (본인 환경에 맞게 수정)
 env:
