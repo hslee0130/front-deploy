@@ -8,7 +8,7 @@ on:
 # 환경 변수 (본인 환경에 맞게 수정)
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
-  S3_BUCKET_NAME: ${{ secrets.AWS_S3_FRNT_BUCKET_NM }}
+  AWS_S3_FRNT_BUCKET_NM: ${{ secrets.AWS_S3_FRNT_BUCKET_NM }}
 
 # OIDC 토큰 요청을 위한 권한 설정
 permissions:
