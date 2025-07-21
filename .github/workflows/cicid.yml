@@ -1,0 +1,61 @@
+name: Dev CI/CD for React App
+
+on:
+  pull_request:
+    types: [closed]
+    branches: 
+      - 'develop'
+
+# 환경 변수 (본인 환경에 맞게 수정)
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  S3_BUCKET_NAME: ${{ secrets.AWS_S3_FRNT_BUCKET_NM }}
+
+# OIDC 토큰 요청을 위한 권한 설정
+permissions:
+  id-token: write # OIDC 인증을 위해 JWT를 요청하는데 필요
+  contents: read  # actions/checkout@v4에서 코드를 가져오는데 필요
+
+jobs:
+  build-and-deploy:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout develop branch
+        uses: actions/checkout@v4
+        with:
+          ref: 'develop'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23
+
+      - name: Cache npm dependencies
+        id: cache-npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: npm i
+
+      - name: Build React App
+        run: npm run build:prd
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # 담당할 IAM 역할의 ARN 지정
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_ARN }}
+          # 역할 세션 이름 지정
+          role-session-name: GitHubActionsSession
+          aws-region: ${{ secrets.AWS_REGION }}
+          mask-aws-account-id: 'true' # AWS 계정 ID 마스킹 처리
+
+      - name: Upload to S3
+        run: |
+          aws s3 sync ./build s3://${{ env.AWS_S3_FRNT_BUCKET_NM }} --delete
